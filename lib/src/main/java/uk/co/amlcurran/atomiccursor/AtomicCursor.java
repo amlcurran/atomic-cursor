@@ -38,25 +38,21 @@ public class AtomicCursor {
 
     private int checkForDeletions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         int offset = 0;
-        int currentPosition = currentCursor.getPosition();
         long potentiallyDeletedId = currentCursor.getId();
         if (currentCursor.isOneInFrontOf(newCursor) && !newCursor.containsId(potentiallyDeletedId)) {
             callbacks.deletedAt(currentCursor.getPosition());
             offset = -1;
         }
-        currentCursor.moveToPosition(currentPosition);
         return offset;
     }
 
     private int checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         int additions = 0;
         long potentiallyAddedId = newCursor.getId();
-        int newCursorPosition = newCursor.getPosition();
         if (newCursor.isOneInFrontOf(currentCursor) && !currentCursor.containsId(potentiallyAddedId)) {
             callbacks.insertedAt(currentCursor.getPosition());
             additions = 1;
         }
-        newCursor.moveToPosition(newCursorPosition);
         return additions;
     }
 
