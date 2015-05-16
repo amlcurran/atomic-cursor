@@ -3,21 +3,16 @@ package uk.co.amlcurran.atomiccursor;
 import android.database.Cursor;
 import android.provider.BaseColumns;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class AtomicCursor {
 
     private Callbacks callbacks = NULL_SAFE_CALLBACKS;
     private Cursor currentCursor = new NullCursor();
-    private List<Integer> shouldIgnoreAsMoved = new ArrayList<>();
 
     public void setCallbacks(Callbacks callbacks) {
         this.callbacks = callbacks;
     }
 
     public void submit(Cursor cursor) {
-        shouldIgnoreAsMoved.clear();
         if (cursor == null) {
             currentCursor = new NullCursor();
         } else {
@@ -38,43 +33,32 @@ public class AtomicCursor {
             long currentId = currentCursor.getLong(currentIdIndex);
             long newId = newCursor.getLong(newIdIndex);
             if (currentId != newId) {
-                checkForMoves(currentCursor, newCursor, currentIdIndex, newId);
                 offset += checkForAdditions(currentCursor, newCursor, newIdIndex, currentId);
-                checkForDeletions(currentCursor, currentIdIndex, newId);
+                offset += checkForDeletions(currentCursor, currentIdIndex, newId);
             }
         }
     }
 
-    private void checkForMoves(Cursor currentCursor, Cursor newCursor, int currentIdIndex, long newId) {
-        int startPosition = currentCursor.getPosition();
-        currentCursor.moveToFirst();
-        while (currentCursor.moveToNext()) {
-            if (currentCursor.getLong(currentIdIndex) == newId) {
-                shouldIgnoreAsMoved.add(currentCursor.getPosition());
-                callbacks.moved(currentCursor.getPosition(), newCursor.getPosition());
-            }
+    private int checkForDeletions(Cursor currentCursor, int currentIdIndex, long newId) {
+        int offset = 0;
+        currentCursor.moveToNext();
+        if (newId == currentCursor.getLong(currentIdIndex)) {
+            callbacks.deletedAt(currentCursor.getPosition() - 1);
+            offset = -1;
         }
-        currentCursor.moveToPosition(startPosition);
+        currentCursor.moveToPrevious();
+        return offset;
     }
 
-    private void checkForDeletions(Cursor currentCursor, int currentIdIndex, long newId) {
-        if (currentCursor.moveToNext()) {
-            if (newId == currentCursor.getLong(currentIdIndex) && shouldNotIgnorePosition(currentCursor)) {
-                callbacks.deletedAt(currentCursor.getPosition() - 1);
-            }
-            currentCursor.moveToPrevious();
-        }
-    }
-
-    private boolean shouldNotIgnorePosition(Cursor currentCursor) {
-        return !shouldIgnoreAsMoved.contains(currentCursor.getPosition());
+    private static boolean atStart(Cursor currentCursor) {
+        return currentCursor.getPosition() == 0;
     }
 
     private int checkForAdditions(Cursor currentCursor, Cursor newCursor, int newIdIndex, long currentId) {
         int additions = 0;
         newCursor.moveToNext();
         long nextNewId = newCursor.getLong(newIdIndex);
-        if (nextNewId == currentId && shouldNotIgnorePosition(newCursor)) {
+        if (nextNewId == currentId) {
             callbacks.insertedAt(currentCursor.getPosition());
             additions = 1;
         }
@@ -96,11 +80,6 @@ public class AtomicCursor {
         public void deletedAt(int position) {
 
         }
-
-        @Override
-        public void moved(int from, int to) {
-
-        }
     };
 
     public interface Callbacks {
@@ -109,7 +88,5 @@ public class AtomicCursor {
         void insertedAt(int position);
 
         void deletedAt(int position);
-
-        void moved(int from, int to);
     }
 }
