@@ -13,14 +13,10 @@ public class AtomicCursor {
 
     public void submit(Cursor cursor) {
         if (cursor == null) {
-            currentCursor = new NullCursor();
-        } else {
-            if (currentCursor instanceof NullCursor) {
-                callbacks.dataChanged();
-            }
-            walkCursor(new WrappedCursor(currentCursor), new WrappedCursor(cursor));
-            currentCursor = cursor;
+            cursor = new NullCursor();
         }
+        walkCursor(new WrappedCursor(currentCursor), new WrappedCursor(cursor));
+        currentCursor = cursor;
     }
 
     private void walkCursor(WrappedCursor currentCursor, WrappedCursor newCursor) {

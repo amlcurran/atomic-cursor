@@ -18,19 +18,4 @@ public class AtomicCursorComboTest {
         callbacks.assertDeletedAt(0);
     }
 
-    @Test
-    @Ignore(value = "should handle in future")
-    public void testUnhandledChangesResultInFullChange() {
-        AssertingCallbacks callbacks = new AssertingCallbacks();
-        AtomicCursor atomicCursor = new AtomicCursor();
-
-        atomicCursor.submit(ListCursor.withIds(1, 3, 2));
-        atomicCursor.setCallbacks(callbacks);
-        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
-
-        callbacks.assertNoAdditions();
-        callbacks.assertNoDeletions();
-        callbacks.assertChanged();
-    }
-
 }
