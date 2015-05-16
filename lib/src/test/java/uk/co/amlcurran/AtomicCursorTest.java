@@ -12,7 +12,8 @@ public class AtomicCursorTest {
     @Test
     public void testSubmittingACursorResultsInDatasetChanged() {
         AssertingCallbacks callbacks = new AssertingCallbacks();
-        AtomicCursor atomicCursor = new AtomicCursor(callbacks);
+        AtomicCursor atomicCursor = new AtomicCursor();
+        atomicCursor.setCallbacks(callbacks);
 
         atomicCursor.submit(ListCursor.withIds(1, 2, 3));
 
@@ -22,7 +23,8 @@ public class AtomicCursorTest {
     @Test
     public void testSubmittingANullCursorFirstDoesNotChangeData() {
         AssertingCallbacks callbacks = new AssertingCallbacks();
-        AtomicCursor atomicCursor = new AtomicCursor(callbacks);
+        AtomicCursor atomicCursor = new AtomicCursor();
+        atomicCursor.setCallbacks(callbacks);
 
         atomicCursor.submit(null);
 
@@ -32,27 +34,41 @@ public class AtomicCursorTest {
     @Test
     public void testAddingAnItem() {
         AssertingCallbacks callbacks = new AssertingCallbacks();
-        AtomicCursor atomicCursor = new AtomicCursor(callbacks);
+        AtomicCursor atomicCursor = new AtomicCursor();
 
         atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.setCallbacks(callbacks);
         atomicCursor.submit(ListCursor.withIds(1, 2, 4, 3));
 
         callbacks.assertInsertedAt(2);
     }
 
     @Test
-    public void testAddingTwoItems() {
+    public void testAddingAnItemDoesntNotifyGenericChange() {
         AssertingCallbacks callbacks = new AssertingCallbacks();
-        AtomicCursor atomicCursor = new AtomicCursor(callbacks);
+        AtomicCursor atomicCursor = new AtomicCursor();
 
         atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.setCallbacks(callbacks);
+        atomicCursor.submit(ListCursor.withIds(1, 2, 4, 3));
+
+        assertThat(callbacks.hasChanged).isFalse();
+    }
+
+    @Test
+    public void testAddingTwoItems() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.setCallbacks(callbacks);
         atomicCursor.submit(ListCursor.withIds(2, 1, 2, 4, 3));
 
         callbacks.assertInsertedAt(0);
         callbacks.assertInsertedAt(2);
     }
 
-    class AssertingCallbacks {
+    static class AssertingCallbacks {
         public boolean hasChanged;
         private List<Integer> insertedAt = new ArrayList<>();
 
