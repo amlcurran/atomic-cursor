@@ -44,6 +44,43 @@ public class AtomicCursorTest {
     }
 
     @Test
+    public void testDeletingAnItem() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.setCallbacks(callbacks);
+        atomicCursor.submit(ListCursor.withIds(1, 3));
+
+        callbacks.assertDeletedAt(1);
+    }
+
+    @Test
+    public void testDeletingAnItemAtTheStart() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.setCallbacks(callbacks);
+        atomicCursor.submit(ListCursor.withIds(2, 3));
+
+        callbacks.assertDeletedAt(0);
+    }
+
+    @Test
+    public void testDeletingTwoItems() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3, 4, 5));
+        atomicCursor.setCallbacks(callbacks);
+        atomicCursor.submit(ListCursor.withIds(1, 3, 5));
+
+        callbacks.assertDeletedAt(1);
+        callbacks.assertDeletedAt(3);
+    }
+
+    @Test
     public void testAddingAnItemDoesntNotifyGenericChange() {
         AssertingCallbacks callbacks = new AssertingCallbacks();
         AtomicCursor atomicCursor = new AtomicCursor();
@@ -71,6 +108,7 @@ public class AtomicCursorTest {
     static class AssertingCallbacks implements AtomicCursor.Callbacks {
         public boolean hasChanged;
         private List<Integer> insertedAt = new ArrayList<>();
+        private List<Integer> deletedAt = new ArrayList<>();
 
         @Override
         public void dataChanged() {
@@ -82,15 +120,22 @@ public class AtomicCursorTest {
             insertedAt.add(position);
         }
 
-        public boolean wasInsertedAt(int position) {
-            return insertedAt.contains(position);
+        @Override
+        public void deletedAt(int position) {
+            deletedAt.add(position);
         }
 
         private void assertInsertedAt(int position) {
-            assertThat(wasInsertedAt(position))
+            assertThat(insertedAt.contains(position))
                     .overridingErrorMessage("Expected insert at %1d, was inserted at %2$s", position, insertedAt.toString())
                     .isTrue();
 
+        }
+
+        public void assertDeletedAt(int position) {
+            assertThat(deletedAt.contains(position))
+                    .overridingErrorMessage("Expected delete at %1d, was deleted at %2$s", position, insertedAt.toString())
+                    .isTrue();
         }
     }
 

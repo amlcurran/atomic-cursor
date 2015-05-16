@@ -34,8 +34,24 @@ public class AtomicCursor {
             long newId = newCursor.getLong(newIdIndex);
             if (currentId != newId) {
                 offset += checkForAdditions(currentCursor, newCursor, newIdIndex, currentId);
+                offset += checkForDeletions(currentCursor, currentIdIndex, newId);
             }
         }
+    }
+
+    private int checkForDeletions(Cursor currentCursor, int currentIdIndex, long newId) {
+        int offset = 0;
+        currentCursor.moveToNext();
+        if (newId == currentCursor.getLong(currentIdIndex)) {
+            callbacks.deletedAt(currentCursor.getPosition() - 1);
+            offset = -1;
+        }
+        currentCursor.moveToPrevious();
+        return offset;
+    }
+
+    private static boolean atStart(Cursor currentCursor) {
+        return currentCursor.getPosition() == 0;
     }
 
     private int checkForAdditions(Cursor currentCursor, Cursor newCursor, int newIdIndex, long currentId) {
@@ -59,11 +75,18 @@ public class AtomicCursor {
         public void insertedAt(int position) {
 
         }
+
+        @Override
+        public void deletedAt(int position) {
+
+        }
     };
 
     public interface Callbacks {
         void dataChanged();
 
         void insertedAt(int position);
+
+        void deletedAt(int position);
     }
 }
