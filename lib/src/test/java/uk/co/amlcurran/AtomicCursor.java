@@ -30,12 +30,11 @@ public class AtomicCursor {
     }
 
     private void walkCursor(Cursor currentCursor, Cursor newCursor) {
-        currentCursor.moveToFirst();
-        newCursor.moveToFirst();
         int currentIdIndex = currentCursor.getColumnIndex(BaseColumns._ID);
         int newIdIndex = newCursor.getColumnIndex(BaseColumns._ID);
+        int offset = 0;
         while (currentCursor.moveToNext()) {
-            newCursor.moveToPosition(currentCursor.getPosition());
+            newCursor.moveToPosition(currentCursor.getPosition() + offset);
             long currentId = currentCursor.getLong(currentIdIndex);
             long newId = newCursor.getLong(newIdIndex);
             if (currentId != newId) {
@@ -43,6 +42,7 @@ public class AtomicCursor {
                 long nextNewId = newCursor.getLong(newIdIndex);
                 if (nextNewId == currentId) {
                     callbacks.insertedAt(currentCursor.getPosition());
+                    offset += 1;
                 }
             }
         }
