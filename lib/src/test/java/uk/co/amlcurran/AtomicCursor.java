@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.BaseColumns;
 
 public class AtomicCursor {
 
@@ -23,7 +24,27 @@ public class AtomicCursor {
             if (currentCursor == NULL_SAFE) {
                 callbacks.dataChanged();
             }
+            walkCursor(currentCursor, cursor);
             currentCursor = cursor;
+        }
+    }
+
+    private void walkCursor(Cursor currentCursor, Cursor newCursor) {
+        currentCursor.moveToFirst();
+        newCursor.moveToFirst();
+        int currentIdIndex = currentCursor.getColumnIndex(BaseColumns._ID);
+        int newIdIndex = newCursor.getColumnIndex(BaseColumns._ID);
+        while (currentCursor.moveToNext()) {
+            newCursor.moveToPosition(currentCursor.getPosition());
+            long currentId = currentCursor.getLong(currentIdIndex);
+            long newId = newCursor.getLong(newIdIndex);
+            if (currentId != newId) {
+                newCursor.moveToNext();
+                long nextNewId = newCursor.getLong(newIdIndex);
+                if (nextNewId == currentId) {
+                    callbacks.insertedAt(currentCursor.getPosition());
+                }
+            }
         }
     }
 

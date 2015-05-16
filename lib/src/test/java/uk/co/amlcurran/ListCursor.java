@@ -149,7 +149,7 @@ public class ListCursor implements Cursor {
 
     @Override
     public long getLong(int columnIndex) {
-        return 0;
+        return list.get(currentPosition).getId();
     }
 
     @Override

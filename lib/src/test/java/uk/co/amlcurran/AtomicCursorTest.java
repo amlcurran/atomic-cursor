@@ -26,11 +26,27 @@ public class AtomicCursorTest {
         assertThat(callbacks.hasChanged).isFalse();
     }
 
+    @Test
+    public void testAddingAnItem() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor(callbacks);
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.submit(ListCursor.withIds(1, 2, 4, 3));
+
+        assertThat(callbacks.insertedAt).isEqualTo(2);
+    }
+
     class AssertingCallbacks {
         public boolean hasChanged;
+        public int insertedAt;
 
         public void dataChanged() {
             hasChanged = true;
+        }
+
+        public void insertedAt(int position) {
+            insertedAt = position;
         }
     }
 
