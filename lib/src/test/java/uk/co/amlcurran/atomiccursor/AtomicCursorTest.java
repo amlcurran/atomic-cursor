@@ -115,6 +115,20 @@ public class AtomicCursorTest {
         atomicCursor.submit(ListCursor.withIds(1, 3, 2));
 
         callbacks.assertMoved(1, 2);
+        callbacks.assertNoDeletions();
+        callbacks.assertNoAdditions();
+    }
+
+    @Test
+    public void testMovingAnItemFromTheStart() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.setCallbacks(callbacks);
+        atomicCursor.submit(ListCursor.withIds(2, 1, 3));
+
+        callbacks.assertMoved(0, 1);
     }
 
     @Test
@@ -174,6 +188,18 @@ public class AtomicCursorTest {
             assertThat(moved.contains(new Tuple<>(from, to)))
                     .overridingErrorMessage("Expected move from %1d to %2$d, was moved at %3$s", from, to, moved.toString())
                     .isTrue();
+        }
+
+        public void assertNoDeletions() {
+            assertThat(deletedAt.size())
+                    .overridingErrorMessage("Shouldn't have deletions at: " + deletedAt.toString())
+                    .isEqualTo(0);
+        }
+
+        public void assertNoAdditions() {
+            assertThat(insertedAt.size())
+                    .overridingErrorMessage("Shouldn't have insertations at: " + insertedAt.toString())
+                    .isEqualTo(0);
         }
 
         private class Tuple<A, B> {
