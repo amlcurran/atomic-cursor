@@ -49,4 +49,8 @@ class AssertingCallbacks implements AtomicCursor.Callbacks {
                 .overridingErrorMessage("Expected no inserts, was inserted at " + insertedAt.toString())
                 .isEqualTo(0);
     }
+
+    public void assertChanged() {
+        assertThat(hasChanged).isTrue();
+    }
 }
