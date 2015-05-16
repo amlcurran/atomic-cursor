@@ -44,6 +44,18 @@ public class AtomicCursorTest {
     }
 
     @Test
+    public void testAMoveIsntAnAdd() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.setCallbacks(callbacks);
+        atomicCursor.submit(ListCursor.withIds(1, 3, 2));
+
+        callbacks.assertNoAdditions();
+    }
+
+    @Test
     public void testDeletingAnItem() {
         AssertingCallbacks callbacks = new AssertingCallbacks();
         AtomicCursor atomicCursor = new AtomicCursor();
@@ -54,6 +66,18 @@ public class AtomicCursorTest {
 
         callbacks.assertDeletedAt(1);
     }
+
+//    @Test
+//    public void testAMoveIsntADelete() {
+//        AssertingCallbacks callbacks = new AssertingCallbacks();
+//        AtomicCursor atomicCursor = new AtomicCursor();
+//
+//        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+//        atomicCursor.setCallbacks(callbacks);
+//        atomicCursor.submit(ListCursor.withIds(1, 3, 2));
+//
+//        callbacks.assertNoDeletions();
+//    }
 
     @Test
     public void testDeletingAnItemAtTheStart() {
@@ -99,7 +123,7 @@ public class AtomicCursorTest {
 
         atomicCursor.submit(ListCursor.withIds(1, 2, 3));
         atomicCursor.setCallbacks(callbacks);
-        atomicCursor.submit(ListCursor.withIds(2, 1, 2, 4, 3));
+        atomicCursor.submit(ListCursor.withIds(5, 1, 2, 4, 3));
 
         callbacks.assertInsertedAt(0);
         callbacks.assertInsertedAt(2);
@@ -134,8 +158,20 @@ public class AtomicCursorTest {
 
         public void assertDeletedAt(int position) {
             assertThat(deletedAt.contains(position))
-                    .overridingErrorMessage("Expected delete at %1d, was deleted at %2$s", position, insertedAt.toString())
+                    .overridingErrorMessage("Expected delete at %1d, was deleted at %2$s", position, deletedAt.toString())
                     .isTrue();
+        }
+
+        public void assertNoDeletions() {
+            assertThat(deletedAt.size())
+                    .overridingErrorMessage("Expected no deletes, was deleted at " + deletedAt.toString())
+                    .isEqualTo(0);
+        }
+
+        public void assertNoAdditions() {
+            assertThat(insertedAt.size())
+                    .overridingErrorMessage("Expected no inserts, was inserted at " + insertedAt.toString())
+                    .isEqualTo(0);
         }
     }
 

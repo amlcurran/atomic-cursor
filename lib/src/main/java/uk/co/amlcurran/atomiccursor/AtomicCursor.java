@@ -55,11 +55,13 @@ public class AtomicCursor {
 
     private int checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor, long currentId) {
         int additions = 0;
-        newCursor.moveToNext();
-        long nextNewId = newCursor.getId();
-        if (nextNewId == currentId) {
-            callbacks.insertedAt(currentCursor.getPosition());
-            additions = 1;
+        long potentiallyAddedId = newCursor.getId();
+        if (newCursor.moveToNext()) {
+            long nextNewId = newCursor.getId();
+            if (nextNewId == currentId && !currentCursor.containsId(potentiallyAddedId)) {
+                callbacks.insertedAt(currentCursor.getPosition());
+                additions = 1;
+            }
         }
         return additions;
     }
@@ -93,6 +95,19 @@ public class AtomicCursor {
         public long getId() {
             return cursor.getLong(idIndex);
         }
+
+        public boolean containsId(long id) {
+            int startPosition = getPosition();
+            moveToPosition(-1);
+            while (moveToNext()) {
+                if (getId() == id) {
+                    return true;
+                }
+            }
+            moveToPosition(startPosition);
+            return false;
+        }
+
     }
 
     private static final Callbacks NULL_SAFE_CALLBACKS = new Callbacks() {
