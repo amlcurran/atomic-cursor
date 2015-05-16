@@ -68,14 +68,16 @@ public class AtomicCursorTest {
         callbacks.assertInsertedAt(2);
     }
 
-    static class AssertingCallbacks {
+    static class AssertingCallbacks implements AtomicCursor.Callbacks {
         public boolean hasChanged;
         private List<Integer> insertedAt = new ArrayList<>();
 
+        @Override
         public void dataChanged() {
             hasChanged = true;
         }
 
+        @Override
         public void insertedAt(int position) {
             insertedAt.add(position);
         }

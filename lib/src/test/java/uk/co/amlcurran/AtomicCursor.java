@@ -11,10 +11,10 @@ import android.provider.BaseColumns;
 
 public class AtomicCursor {
 
-    private AtomicCursorTest.AssertingCallbacks callbacks = NULL_SAFE_CALLBACKS;
+    private Callbacks callbacks = NULL_SAFE_CALLBACKS;
     private Cursor currentCursor = NULL_SAFE;
 
-    public void setCallbacks(AtomicCursorTest.AssertingCallbacks callbacks) {
+    public void setCallbacks(Callbacks callbacks) {
         this.callbacks = callbacks;
     }
 
@@ -251,6 +251,21 @@ public class AtomicCursor {
         }
     };
 
-    private static final AtomicCursorTest.AssertingCallbacks NULL_SAFE_CALLBACKS = new AtomicCursorTest.AssertingCallbacks() {
+    private static final Callbacks NULL_SAFE_CALLBACKS = new Callbacks() {
+        @Override
+        public void dataChanged() {
+
+        }
+
+        @Override
+        public void insertedAt(int position) {
+
+        }
     };
+
+    public interface Callbacks {
+        void dataChanged();
+
+        void insertedAt(int position);
+    }
 }
