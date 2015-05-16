@@ -1,4 +1,4 @@
-package uk.co.amlcurran;
+package uk.co.amlcurran.atomiccursor;
 
 public class IdentifiableObject {
 

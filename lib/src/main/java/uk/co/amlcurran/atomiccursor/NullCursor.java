@@ -1,4 +1,4 @@
-package uk.co.amlcurran;
+package uk.co.amlcurran.atomiccursor;
 
 import android.content.ContentResolver;
 import android.database.CharArrayBuffer;
@@ -8,73 +8,45 @@ import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class ListCursor implements Cursor {
-
-    private final List<IdentifiableObject> list;
-    private int currentPosition = -1;
-
-    public static ListCursor withIds(long... ids) {
-        List<IdentifiableObject> objects = new ArrayList<>();
-        for (long id : ids) {
-            objects.add(new IdentifiableObject(id));
-        }
-        return new ListCursor(objects);
-    }
-
-    public ListCursor(List<IdentifiableObject> list) {
-        this.list = list;
-    }
-
+class NullCursor implements Cursor {
     @Override
     public int getCount() {
-        return list.size();
+        return 0;
     }
 
     @Override
     public int getPosition() {
-        return currentPosition;
+        return 0;
     }
 
     @Override
     public boolean move(int offset) {
-        return safeMoveTo(currentPosition + offset);
-    }
-
-    private boolean safeMoveTo(int position) {
-        if (position >= getCount()) {
-            return false;
-        } else {
-            currentPosition = position;
-            return true;
-        }
+        return false;
     }
 
     @Override
     public boolean moveToPosition(int position) {
-        return safeMoveTo(position);
+        return false;
     }
 
     @Override
     public boolean moveToFirst() {
-        return safeMoveTo(0);
+        return false;
     }
 
     @Override
     public boolean moveToLast() {
-        return safeMoveTo(getCount() - 1);
+        return false;
     }
 
     @Override
     public boolean moveToNext() {
-        return safeMoveTo(currentPosition + 1);
+        return false;
     }
 
     @Override
     public boolean moveToPrevious() {
-        return safeMoveTo(currentPosition - 1);
+        return false;
     }
 
     @Override
@@ -149,7 +121,7 @@ public class ListCursor implements Cursor {
 
     @Override
     public long getLong(int columnIndex) {
-        return list.get(currentPosition).getId();
+        return 0;
     }
 
     @Override
