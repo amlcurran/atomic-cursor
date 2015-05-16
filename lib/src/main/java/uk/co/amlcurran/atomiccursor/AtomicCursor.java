@@ -33,21 +33,27 @@ public class AtomicCursor {
             long currentId = currentCursor.getLong(currentIdIndex);
             long newId = newCursor.getLong(newIdIndex);
             if (currentId != newId) {
+                int startPosition = currentCursor.getPosition();
+                currentCursor.moveToFirst();
+                while (currentCursor.moveToNext()) {
+                    if (currentCursor.getLong(currentIdIndex) == newId) {
+                        callbacks.moved(currentCursor.getPosition(), newCursor.getPosition());
+                    }
+                }
+                currentCursor.moveToPosition(startPosition);
                 offset += checkForAdditions(currentCursor, newCursor, newIdIndex, currentId);
-                offset += checkForDeletions(currentCursor, currentIdIndex, newId);
+                checkForDeletions(currentCursor, currentIdIndex, newId);
             }
         }
     }
 
-    private int checkForDeletions(Cursor currentCursor, int currentIdIndex, long newId) {
-        int offset = 0;
-        currentCursor.moveToNext();
-        if (newId == currentCursor.getLong(currentIdIndex)) {
-            callbacks.deletedAt(currentCursor.getPosition() - 1);
-            offset = -1;
+    private void checkForDeletions(Cursor currentCursor, int currentIdIndex, long newId) {
+        if (currentCursor.moveToNext()) {
+            if (newId == currentCursor.getLong(currentIdIndex)) {
+                callbacks.deletedAt(currentCursor.getPosition() - 1);
+            }
+            currentCursor.moveToPrevious();
         }
-        currentCursor.moveToPrevious();
-        return offset;
     }
 
     private static boolean atStart(Cursor currentCursor) {
@@ -80,6 +86,11 @@ public class AtomicCursor {
         public void deletedAt(int position) {
 
         }
+
+        @Override
+        public void moved(int from, int to) {
+
+        }
     };
 
     public interface Callbacks {
@@ -88,5 +99,7 @@ public class AtomicCursor {
         void insertedAt(int position);
 
         void deletedAt(int position);
+
+        void moved(int from, int to);
     }
 }
