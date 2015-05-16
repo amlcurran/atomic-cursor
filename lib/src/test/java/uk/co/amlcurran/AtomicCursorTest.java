@@ -2,8 +2,6 @@ package uk.co.amlcurran;
 
 import org.junit.Test;
 
-import java.util.Arrays;
-
 import static org.fest.assertions.api.Assertions.assertThat;
 
 public class AtomicCursorTest {
@@ -13,7 +11,7 @@ public class AtomicCursorTest {
         AssertingCallbacks callbacks = new AssertingCallbacks();
         AtomicCursor atomicCursor = new AtomicCursor(callbacks);
 
-        atomicCursor.submit(new ListCursor(Arrays.asList("1", "2", "3")));
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
 
         assertThat(callbacks.hasChanged).isTrue();
     }

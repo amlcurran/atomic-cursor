@@ -8,14 +8,23 @@ import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ListCursor implements Cursor {
 
-    private final List list;
+    private final List<IdentifiableObject> list;
     private int currentPosition = -1;
 
-    public ListCursor(List list) {
+    public static ListCursor withIds(long... ids) {
+        List<IdentifiableObject> objects = new ArrayList<>();
+        for (long id : ids) {
+            objects.add(new IdentifiableObject(id));
+        }
+        return new ListCursor(objects);
+    }
+
+    public ListCursor(List<IdentifiableObject> list) {
         this.list = list;
     }
 
