@@ -32,25 +32,20 @@ public class AtomicCursor {
             long newId = newCursor.getId();
             if (currentId != newId) {
                 offset += checkForAdditions(currentCursor, newCursor, currentId);
-                offset += checkForDeletions(currentCursor, newId);
+                offset += checkForDeletions(currentCursor, newCursor);
             }
         }
     }
 
-    private int checkForDeletions(WrappedCursor currentCursor, long newId) {
+    private int checkForDeletions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         int offset = 0;
-        if (currentCursor.moveToNext()) {
-            if (newId == currentCursor.getId()) {
-                callbacks.deletedAt(currentCursor.getPosition() - 1);
-                offset = -1;
-            }
-            currentCursor.moveToPrevious();
+        int currentPosition = currentCursor.getPosition();
+        if (currentCursor.isOneInFrontOf(newCursor)) {
+            callbacks.deletedAt(currentCursor.getPosition() - 1);
+            offset = -1;
         }
+        currentCursor.moveToPosition(currentPosition);
         return offset;
-    }
-
-    private static boolean atStart(Cursor currentCursor) {
-        return currentCursor.getPosition() == 0;
     }
 
     private int checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor, long currentId) {
@@ -62,6 +57,7 @@ public class AtomicCursor {
                 callbacks.insertedAt(currentCursor.getPosition());
                 additions = 1;
             }
+            newCursor.moveToPrevious();
         }
         return additions;
     }
@@ -108,6 +104,13 @@ public class AtomicCursor {
             return false;
         }
 
+        private boolean nextIdMatches(long newId) {
+            return moveToNext() && newId == getId();
+        }
+
+        private boolean isOneInFrontOf(WrappedCursor newCursor) {
+            return nextIdMatches(newCursor.getId());
+        }
     }
 
     private static final Callbacks NULL_SAFE_CALLBACKS = new Callbacks() {
