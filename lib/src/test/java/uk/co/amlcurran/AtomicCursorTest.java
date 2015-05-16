@@ -16,6 +16,16 @@ public class AtomicCursorTest {
         assertThat(callbacks.hasChanged).isTrue();
     }
 
+    @Test
+    public void testSubmittingANullCursorFirstDoesNotChangeData() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor(callbacks);
+
+        atomicCursor.submit(null);
+
+        assertThat(callbacks.hasChanged).isFalse();
+    }
+
     class AssertingCallbacks {
         public boolean hasChanged;
 

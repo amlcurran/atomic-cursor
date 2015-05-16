@@ -17,12 +17,12 @@ public class AtomicCursor {
     }
 
     public void submit(Cursor cursor) {
-        if (currentCursor == NULL_SAFE) {
-            callbacks.dataChanged();
-        }
         if (cursor == null) {
             currentCursor = NULL_SAFE;
         } else {
+            if (currentCursor == NULL_SAFE) {
+                callbacks.dataChanged();
+            }
             currentCursor = cursor;
         }
     }
