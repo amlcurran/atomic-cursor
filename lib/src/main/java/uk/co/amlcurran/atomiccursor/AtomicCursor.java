@@ -15,7 +15,11 @@ public class AtomicCursor {
         if (cursor == null) {
             cursor = new NullCursor();
         }
-        walkCursor(new WrappedCursor(currentCursor), new WrappedCursor(cursor));
+        if (currentCursor instanceof NullCursor) {
+            callbacks.dataChanged();
+        } else {
+            walkCursor(new WrappedCursor(currentCursor), new WrappedCursor(cursor));
+        }
         currentCursor = cursor;
     }
 
@@ -30,28 +34,40 @@ public class AtomicCursor {
                 offset += addAction.offset();
                 Action deleteAction = checkForDeletions(currentCursor, newCursor);
                 offset += deleteAction.offset();
+                if (!addAction.isHandled() || !deleteAction.isHandled()) {
+                    callbacks.dataChanged();
+                    return;
+                }
             }
         }
     }
 
     private Action checkForDeletions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         long potentiallyDeletedId = currentCursor.getId();
-        if (currentCursor.isOneInFrontOf(newCursor) && !newCursor.containsId(potentiallyDeletedId)) {
-            DeleteAction deleteAction = new DeleteAction(currentCursor.getPosition());
-            deleteAction.act(callbacks);
-            return deleteAction;
+        if (currentCursor.isOneInFrontOf(newCursor)) {
+            if (!newCursor.containsId(potentiallyDeletedId)) {
+                DeleteAction deleteAction = new DeleteAction(currentCursor.getPosition());
+                deleteAction.act(callbacks);
+                return deleteAction;
+            } else {
+                return new UnhandledAction();
+            }
         }
-        return new UnhandledAction();
+        return new NoChangeAction();
     }
 
     private Action checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         long potentiallyAddedId = newCursor.getId();
-        if (newCursor.isOneInFrontOf(currentCursor) && !currentCursor.containsId(potentiallyAddedId)) {
-            AddAction addAction = new AddAction(currentCursor.getPosition());
-            addAction.act(callbacks);
-            return addAction;
+        if (newCursor.isOneInFrontOf(currentCursor)) {
+            if (!currentCursor.containsId(potentiallyAddedId)) {
+                AddAction addAction = new AddAction(currentCursor.getPosition());
+                addAction.act(callbacks);
+                return addAction;
+            } else {
+                return new UnhandledAction();
+            }
         }
-        return new UnhandledAction();
+        return new NoChangeAction();
     }
 
     private static final Callbacks NULL_SAFE_CALLBACKS = new Callbacks() {
@@ -142,6 +158,23 @@ public class AtomicCursor {
         @Override
         public boolean isHandled() {
             return false;
+        }
+
+        @Override
+        public int offset() {
+            return 0;
+        }
+    }
+
+    private class NoChangeAction implements Action {
+        @Override
+        public void act(Callbacks callbacks) {
+
+        }
+
+        @Override
+        public boolean isHandled() {
+            return true;
         }
 
         @Override

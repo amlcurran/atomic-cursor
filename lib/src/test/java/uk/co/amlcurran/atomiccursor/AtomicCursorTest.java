@@ -1,6 +1,5 @@
 package uk.co.amlcurran.atomiccursor;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -8,7 +7,6 @@ import static org.fest.assertions.api.Assertions.assertThat;
 public class AtomicCursorTest {
 
     @Test
-    @Ignore (value = "handle soon")
     public void testSubmittingACursorResultsInDatasetChanged() {
         AssertingCallbacks callbacks = new AssertingCallbacks();
         AtomicCursor atomicCursor = new AtomicCursor();
@@ -44,7 +42,6 @@ public class AtomicCursorTest {
     }
 
     @Test
-    @Ignore (value = "handle after commit")
     public void testUnhandledChangesResultInFullChange() {
         AssertingCallbacks callbacks = new AssertingCallbacks();
         AtomicCursor atomicCursor = new AtomicCursor();
