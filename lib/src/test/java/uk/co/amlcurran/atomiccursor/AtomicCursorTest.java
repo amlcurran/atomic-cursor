@@ -67,17 +67,17 @@ public class AtomicCursorTest {
         callbacks.assertDeletedAt(1);
     }
 
-//    @Test
-//    public void testAMoveIsntADelete() {
-//        AssertingCallbacks callbacks = new AssertingCallbacks();
-//        AtomicCursor atomicCursor = new AtomicCursor();
-//
-//        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
-//        atomicCursor.setCallbacks(callbacks);
-//        atomicCursor.submit(ListCursor.withIds(1, 3, 2));
-//
-//        callbacks.assertNoDeletions();
-//    }
+    @Test
+    public void testAMoveIsntADelete() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3));
+        atomicCursor.setCallbacks(callbacks);
+        atomicCursor.submit(ListCursor.withIds(1, 3, 2));
+
+        callbacks.assertNoDeletions();
+    }
 
     @Test
     public void testDeletingAnItemAtTheStart() {
