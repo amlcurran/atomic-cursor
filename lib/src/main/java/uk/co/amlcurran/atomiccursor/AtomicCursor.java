@@ -19,30 +19,28 @@ public class AtomicCursor {
             if (currentCursor instanceof NullCursor) {
                 callbacks.dataChanged();
             }
-            walkCursor(currentCursor, cursor);
+            walkCursor(new WrappedCursor(currentCursor), new WrappedCursor(cursor));
             currentCursor = cursor;
         }
     }
 
-    private void walkCursor(Cursor currentCursor, Cursor newCursor) {
-        int currentIdIndex = currentCursor.getColumnIndex(BaseColumns._ID);
-        int newIdIndex = newCursor.getColumnIndex(BaseColumns._ID);
+    private void walkCursor(WrappedCursor currentCursor, WrappedCursor newCursor) {
         int offset = 0;
         while (currentCursor.moveToNext()) {
             newCursor.moveToPosition(currentCursor.getPosition() + offset);
-            long currentId = currentCursor.getLong(currentIdIndex);
-            long newId = newCursor.getLong(newIdIndex);
+            long currentId = currentCursor.getId();
+            long newId = newCursor.getId();
             if (currentId != newId) {
-                offset += checkForAdditions(currentCursor, newCursor, newIdIndex, currentId);
-                offset += checkForDeletions(currentCursor, currentIdIndex, newId);
+                offset += checkForAdditions(currentCursor, newCursor, currentId);
+                offset += checkForDeletions(currentCursor, newId);
             }
         }
     }
 
-    private int checkForDeletions(Cursor currentCursor, int currentIdIndex, long newId) {
+    private int checkForDeletions(WrappedCursor currentCursor, long newId) {
         int offset = 0;
         currentCursor.moveToNext();
-        if (newId == currentCursor.getLong(currentIdIndex)) {
+        if (newId == currentCursor.getId()) {
             callbacks.deletedAt(currentCursor.getPosition() - 1);
             offset = -1;
         }
@@ -54,15 +52,46 @@ public class AtomicCursor {
         return currentCursor.getPosition() == 0;
     }
 
-    private int checkForAdditions(Cursor currentCursor, Cursor newCursor, int newIdIndex, long currentId) {
+    private int checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor, long currentId) {
         int additions = 0;
         newCursor.moveToNext();
-        long nextNewId = newCursor.getLong(newIdIndex);
+        long nextNewId = newCursor.getId();
         if (nextNewId == currentId) {
             callbacks.insertedAt(currentCursor.getPosition());
             additions = 1;
         }
         return additions;
+    }
+
+    private class WrappedCursor {
+
+        private final Cursor cursor;
+        private final int idIndex;
+
+        public WrappedCursor(Cursor cursor) {
+            this.cursor = cursor;
+            this.idIndex = cursor.getColumnIndexOrThrow(BaseColumns._ID);
+        }
+
+        public boolean moveToNext() {
+            return cursor.moveToNext();
+        }
+
+        public boolean moveToPosition(int position) {
+            return cursor.moveToPosition(position);
+        }
+
+        public int getPosition() {
+            return cursor.getPosition();
+        }
+
+        public boolean moveToPrevious() {
+            return cursor.moveToPrevious();
+        }
+
+        public long getId() {
+            return cursor.getLong(idIndex);
+        }
     }
 
     private static final Callbacks NULL_SAFE_CALLBACKS = new Callbacks() {
