@@ -39,14 +39,19 @@ public class AtomicCursor {
             long currentId = currentCursor.getLong(currentIdIndex);
             long newId = newCursor.getLong(newIdIndex);
             if (currentId != newId) {
-                newCursor.moveToNext();
-                long nextNewId = newCursor.getLong(newIdIndex);
-                if (nextNewId == currentId) {
-                    callbacks.insertedAt(currentCursor.getPosition());
-                    offset += 1;
-                }
+                offset = checkForAdditions(currentCursor, newCursor, newIdIndex, offset, currentId);
             }
         }
+    }
+
+    private int checkForAdditions(Cursor currentCursor, Cursor newCursor, int newIdIndex, int offset, long currentId) {
+        newCursor.moveToNext();
+        long nextNewId = newCursor.getLong(newIdIndex);
+        if (nextNewId == currentId) {
+            callbacks.insertedAt(currentCursor.getPosition());
+            offset += 1;
+        }
+        return offset;
     }
 
     private static final Cursor NULL_SAFE = new Cursor() {
