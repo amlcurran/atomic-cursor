@@ -32,7 +32,7 @@ public class AtomicCursor {
             long newId = newCursor.getId();
             if (currentId != newId) {
                 offset += checkForAdditions(currentCursor, newCursor, currentId);
-                checkForDeletions(currentCursor, newId);
+                offset += checkForDeletions(currentCursor, newId);
             }
         }
     }
