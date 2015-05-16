@@ -57,7 +57,7 @@ public class AtomicCursor {
                 callbacks.insertedAt(currentCursor.getPosition());
                 additions = 1;
             }
-            //newCursor.moveToPrevious();
+            newCursor.moveToPrevious();
         }
         return additions;
     }

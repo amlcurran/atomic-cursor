@@ -35,10 +35,10 @@ public class AtomicCursorTest {
         atomicCursor.setCallbacks(callbacks);
 
         ListCursor cursor = ListCursor.withIds(1, 2, 3);
-        cursor.moveToPosition(1);
+        cursor.moveToPosition(2);
         atomicCursor.submit(cursor);
 
-        assertThat(cursor.getPosition()).isEqualTo(1);
+        assertThat(cursor.getPosition()).isEqualTo(2);
     }
 
 }
