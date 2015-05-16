@@ -33,19 +33,20 @@ public class AtomicCursor {
             long currentId = currentCursor.getLong(currentIdIndex);
             long newId = newCursor.getLong(newIdIndex);
             if (currentId != newId) {
-                offset = checkForAdditions(currentCursor, newCursor, newIdIndex, offset, currentId);
+                offset += checkForAdditions(currentCursor, newCursor, newIdIndex, currentId);
             }
         }
     }
 
-    private int checkForAdditions(Cursor currentCursor, Cursor newCursor, int newIdIndex, int offset, long currentId) {
+    private int checkForAdditions(Cursor currentCursor, Cursor newCursor, int newIdIndex, long currentId) {
+        int additions = 0;
         newCursor.moveToNext();
         long nextNewId = newCursor.getLong(newIdIndex);
         if (nextNewId == currentId) {
             callbacks.insertedAt(currentCursor.getPosition());
-            offset += 1;
+            additions = 1;
         }
-        return offset;
+        return additions;
     }
 
     private static final Callbacks NULL_SAFE_CALLBACKS = new Callbacks() {
