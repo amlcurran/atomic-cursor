@@ -1,7 +1,6 @@
 package uk.co.amlcurran.atomiccursor;
 
 import android.database.Cursor;
-import android.provider.BaseColumns;
 
 public class AtomicCursor {
 
@@ -31,7 +30,7 @@ public class AtomicCursor {
             long currentId = currentCursor.getId();
             long newId = newCursor.getId();
             if (currentId != newId) {
-                offset += checkForAdditions(currentCursor, newCursor, currentId);
+                offset += checkForAdditions(currentCursor, newCursor);
                 offset += checkForDeletions(currentCursor, newCursor);
             }
         }
@@ -40,7 +39,8 @@ public class AtomicCursor {
     private int checkForDeletions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         int offset = 0;
         int currentPosition = currentCursor.getPosition();
-        if (currentCursor.isOneInFrontOf(newCursor)) {
+        long potentiallyDeletedId = currentCursor.getId();
+        if (currentCursor.isOneInFrontOf(newCursor) && !newCursor.containsId(potentiallyDeletedId)) {
             callbacks.deletedAt(currentCursor.getPosition());
             offset = -1;
         }
@@ -48,79 +48,16 @@ public class AtomicCursor {
         return offset;
     }
 
-    private int checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor, long currentId) {
+    private int checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         int additions = 0;
         long potentiallyAddedId = newCursor.getId();
-        if (newCursor.moveToNext()) {
-            long nextNewId = newCursor.getId();
-            if (nextNewId == currentId && !currentCursor.containsId(potentiallyAddedId)) {
-                callbacks.insertedAt(currentCursor.getPosition());
-                additions = 1;
-            }
-            newCursor.moveToPrevious();
+        int newCursorPosition = newCursor.getPosition();
+        if (newCursor.isOneInFrontOf(currentCursor) && !currentCursor.containsId(potentiallyAddedId)) {
+            callbacks.insertedAt(currentCursor.getPosition());
+            additions = 1;
         }
+        newCursor.moveToPosition(newCursorPosition);
         return additions;
-    }
-
-    private class WrappedCursor {
-
-        private final Cursor cursor;
-        private final int idIndex;
-
-        public WrappedCursor(Cursor cursor) {
-            this.cursor = cursor;
-            this.idIndex = cursor.getColumnIndexOrThrow(BaseColumns._ID);
-        }
-
-        public boolean moveToNext() {
-            return cursor.moveToNext();
-        }
-
-        public boolean moveToPosition(int position) {
-            return cursor.moveToPosition(position);
-        }
-
-        public int getPosition() {
-            return cursor.getPosition();
-        }
-
-        public boolean moveToPrevious() {
-            return cursor.moveToPrevious();
-        }
-
-        public long getId() {
-            return cursor.getLong(idIndex);
-        }
-
-        public boolean containsId(long id) {
-            int startPosition = getPosition();
-            moveToPosition(-1);
-            while (moveToNext()) {
-                if (getId() == id) {
-                    return true;
-                }
-            }
-            moveToPosition(startPosition);
-            return false;
-        }
-
-        private boolean nextIdMatches(long newId) {
-            return peekAtId(getPosition() + 1) == newId;
-        }
-
-        private long peekAtId(int position) {
-            long id = -1;
-            int currentPosition = getPosition();
-            if (moveToPosition(position)) {
-                id = getId();
-                moveToPosition(currentPosition);
-            }
-            return id;
-        }
-
-        private boolean isOneInFrontOf(WrappedCursor newCursor) {
-            return nextIdMatches(newCursor.getId());
-        }
     }
 
     private static final Callbacks NULL_SAFE_CALLBACKS = new Callbacks() {
