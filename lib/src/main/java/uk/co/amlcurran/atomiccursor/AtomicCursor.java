@@ -26,30 +26,32 @@ public class AtomicCursor {
             long currentId = currentCursor.getId();
             long newId = newCursor.getId();
             if (currentId != newId) {
-                offset += checkForAdditions(currentCursor, newCursor);
-                offset += checkForDeletions(currentCursor, newCursor);
+                Action addAction = checkForAdditions(currentCursor, newCursor);
+                offset += addAction.offset();
+                Action deleteAction = checkForDeletions(currentCursor, newCursor);
+                offset += deleteAction.offset();
             }
         }
     }
 
-    private int checkForDeletions(WrappedCursor currentCursor, WrappedCursor newCursor) {
-        int offset = 0;
+    private Action checkForDeletions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         long potentiallyDeletedId = currentCursor.getId();
         if (currentCursor.isOneInFrontOf(newCursor) && !newCursor.containsId(potentiallyDeletedId)) {
-            callbacks.deletedAt(currentCursor.getPosition());
-            offset = -1;
+            DeleteAction deleteAction = new DeleteAction(currentCursor.getPosition());
+            deleteAction.act(callbacks);
+            return deleteAction;
         }
-        return offset;
+        return new UnhandledAction();
     }
 
-    private int checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor) {
-        int additions = 0;
+    private Action checkForAdditions(WrappedCursor currentCursor, WrappedCursor newCursor) {
         long potentiallyAddedId = newCursor.getId();
         if (newCursor.isOneInFrontOf(currentCursor) && !currentCursor.containsId(potentiallyAddedId)) {
-            callbacks.insertedAt(currentCursor.getPosition());
-            additions = 1;
+            AddAction addAction = new AddAction(currentCursor.getPosition());
+            addAction.act(callbacks);
+            return addAction;
         }
-        return additions;
+        return new UnhandledAction();
     }
 
     private static final Callbacks NULL_SAFE_CALLBACKS = new Callbacks() {
@@ -69,11 +71,82 @@ public class AtomicCursor {
         }
     };
 
+    private interface Action {
+        void act(Callbacks callbacks);
+
+        boolean isHandled();
+
+        int offset();
+    }
+
     public interface Callbacks {
         void dataChanged();
 
         void insertedAt(int position);
 
         void deletedAt(int position);
+    }
+
+    private class DeleteAction implements Action {
+        private final int position;
+
+        public DeleteAction(int position) {
+            this.position = position;
+        }
+
+        @Override
+        public void act(Callbacks callbacks) {
+            callbacks.deletedAt(position);
+        }
+
+        @Override
+        public boolean isHandled() {
+            return true;
+        }
+
+        @Override
+        public int offset() {
+            return -1;
+        }
+    }
+
+    private class AddAction implements Action {
+        private final int position;
+
+        public AddAction(int position) {
+            this.position = position;
+        }
+
+        @Override
+        public void act(Callbacks callbacks) {
+            callbacks.insertedAt(position);
+        }
+
+        @Override
+        public boolean isHandled() {
+            return true;
+        }
+
+        @Override
+        public int offset() {
+            return 1;
+        }
+    }
+
+    private class UnhandledAction implements Action {
+        @Override
+        public void act(Callbacks callbacks) {
+
+        }
+
+        @Override
+        public boolean isHandled() {
+            return false;
+        }
+
+        @Override
+        public int offset() {
+            return 0;
+        }
     }
 }
