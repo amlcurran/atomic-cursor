@@ -41,7 +41,7 @@ public class AtomicCursor {
         int offset = 0;
         int currentPosition = currentCursor.getPosition();
         if (currentCursor.isOneInFrontOf(newCursor)) {
-            callbacks.deletedAt(currentCursor.getPosition() - 1);
+            callbacks.deletedAt(currentCursor.getPosition());
             offset = -1;
         }
         currentCursor.moveToPosition(currentPosition);
@@ -105,7 +105,17 @@ public class AtomicCursor {
         }
 
         private boolean nextIdMatches(long newId) {
-            return moveToNext() && newId == getId();
+            return peekAtId(getPosition() + 1) == newId;
+        }
+
+        private long peekAtId(int position) {
+            long id = -1;
+            int currentPosition = getPosition();
+            if (moveToPosition(position)) {
+                id = getId();
+                moveToPosition(currentPosition);
+            }
+            return id;
         }
 
         private boolean isOneInFrontOf(WrappedCursor newCursor) {
