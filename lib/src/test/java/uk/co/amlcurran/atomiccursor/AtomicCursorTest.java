@@ -28,4 +28,17 @@ public class AtomicCursorTest {
         assertThat(callbacks.hasChanged).isFalse();
     }
 
+    @Test
+    public void testSubmittingACursorDoesNotChangeItsPosition() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+        atomicCursor.setCallbacks(callbacks);
+
+        ListCursor cursor = ListCursor.withIds(1, 2, 3);
+        cursor.moveToPosition(2);
+        atomicCursor.submit(cursor);
+
+        assertThat(cursor.getPosition()).isEqualTo(2);
+    }
+
 }
