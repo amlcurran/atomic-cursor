@@ -117,6 +117,20 @@ public class AtomicCursorTest {
         callbacks.assertMoved(1, 2);
     }
 
+    @Test
+    public void testMovingTwoItems() {
+        AssertingCallbacks callbacks = new AssertingCallbacks();
+        AtomicCursor atomicCursor = new AtomicCursor();
+
+        atomicCursor.submit(ListCursor.withIds(1, 2, 3, 4, 5));
+        atomicCursor.setCallbacks(callbacks);
+        atomicCursor.submit(ListCursor.withIds(1, 3, 5, 4, 2));
+
+        callbacks.assertMoved(1, 4);
+        callbacks.assertMoved(4, 2);
+        callbacks.assertMoved(2, 1);
+    }
+
     static class AssertingCallbacks implements AtomicCursor.Callbacks {
         public boolean hasChanged;
         private List<Integer> insertedAt = new ArrayList<>();
